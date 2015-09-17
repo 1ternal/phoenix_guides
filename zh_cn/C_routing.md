@@ -165,29 +165,31 @@ comment_path  POST    /comments HelloPhoenix.CommentController :create
 comment_path  PATCH   /comments/:id HelloPhoenix.CommentController :update
               PUT     /comments/:id HelloPhoenix.CommentController :update
 ```
-### Path Helpers
 
-Path helpers are functions which are dynamically defined on the `Router.Helpers` module for an individual application. For us, that is `HelloPhoenix.Router.Helpers`.  Their names are derived from the name of the controller used in the route definition. Our controller is `HelloPhoenix.PageController`, and `page_path` is the function which will return the path to the root of our application.
+### 路径助手(Path Helper)
 
-That's a mouthful. Let's see it in action. Run `$ iex -S mix` at the root of the project. When we call the `page_path` function on our router helpers with the `Endpoint` or connection and action as arguments, it returns the path to us.
+路径助手是在 `Router.Helpers` 模块中动态定义的函数。对我们来说，就是 `HelloPhoenix.Router.Helpers`。它们的名字派生自路由条目所定义的控制器名称。我们的控制器是 `HelloPhoenix.PageController`, 所以 `page_path` 就是这个返回应用根目录路径的函数。
+
+有点绕口，我们看看实际情况。应用的根目录运行 `$ iex -S mix`。当我们以 `Endpoint` 或连接，和动作为参数，在路由助手调用 `page_path` 函数，会返回这个路径。
 
 ```elixir
 iex> HelloPhoenix.Router.Helpers.page_path(HelloPhoenix.Endpoint, :index)
 "/"
 ```
 
-This is significant because we can use the `page_path` function in a template to link to the root of our application. Note: If that function invocation seems uncomfortably long, there is a solution. By including `import HelloPhoenix.Router.Helpers` in our main application view.
+这非常有用，因为我们可以在模板中使用 `page_path` 函数链接到应用的根目录。注意：若果函数调用非常长，这儿有个解决方法。在我们主应用视图中，包含 `import HelloPhoenix.Router.Helpers` 就解决了。
 
 ```html
 <a href="<%= page_path(@conn, :index) %>">To the Welcome Page!</a>
 ```
-Please see the [View Guide](http://www.phoenixframework.org/docs/views) for more information.
 
-This pays off tremendously if we should ever have to change the path of our route in the router. Since the path helpers are built dynamically from the routes, any calls to `page_path` in our templates will still work.
+请查看[视图向导](http://www.phoenixframework.org/docs/views)获取更多信息。
 
-### More on Path Helpers
+这使得我们在修改路由器的路由条目时获益匪浅。因为路径助手是根据路由动态建立的,模板中任何调用 `page_path` 函数仍然能工作正常。
 
-When we ran the `phoenix.routes` task for our user resource, it listed the `user_path` as the path helper function for each line of output. Here is what that translates to for each action.
+### 更多关于路径助手
+
+为用户资源(user resource)执行 `phoenix.routes` 任务时，它会将 `user_path` 作为每行的路径助手输出出来。下面就是每个动作转换过来的路径：
 
 ```elixir
 iex> import HelloPhoenix.Router.Helpers
@@ -214,33 +216,35 @@ iex> user_path(Endpoint, :delete, 17)
 "/users/17"
 ```
 
-What about paths with query strings? By adding an optional fourth argument of key value pairs, the path helpers will return those pairs in the query string.
+搜索路径怎么办？在第四个可选参数添加一个键值对，路径助手就返回以键值对为查询字符的路径了。
 
 ```elixir
 iex> user_path(Endpoint, :show, 17, admin: true, active: false)
 "/users/17?admin=true&active=false"
 ```
 
-What if we need a full url instead of a path? Just replace `_path` by `_url`:
+如果需要 url 而不是 路径咋整？将 `_path` 替换成 `_url` 即可：
 
 ```elixir
 iex(3)> user_url(Endpoint, :index)
 "http://localhost:4000/users"
 ```
-Application endpoints will have their own guide soon. For now, think of them as the entity that handles requests just up to the point where the router takes over. That includes starting the app/server, applying configuration, and applying the plugs common to all requests.
 
-The `_url` functions will get the host, port, proxy port and ssl information needed to construct the full url from the configuration parameters set for each environment. We'll talk about configuration in more detail in its own guide. For now, you can take a look at `/config/dev.exs` file in your own project to see those values.
+后面会有单独的章节将应用终点(endpoints)。现在，把它当作路由接管之前处理请求的实体。包括了启动应用/服务器，设定配置和对所有请求设定常用 plug 等工作。
 
-### Nested Resources
+`_url` 函数将会得到由环境变量设置的，包含了主机、端口、代理端口和 ssl 信息组成完整 url 地址。这些配置会在单独一节探讨。目前，你可以自己项目的 `/config/dev.exs` 看到这些值。
 
-It is also possible to nest resources in a Phoenix router. Let's say we also have a posts resource which has a one to many relationship with users. That is to say, a user can create many posts, and an individual post belongs to only one user. We can represent that by adding a nested route in `web/router.ex` like this.
+### 嵌套资源
+
+Phoenix 允许路由里嵌套资源。假设用户和文章资源之间存在一对多的关系。也就是说，一个用户可以写很多篇文章，一篇文章只属于某一个用户。我们可以像下面这样，在 `web/router.ex` 中增加一个嵌套路由。
 
 ```elixir
 resources "users", UserController do
   resources "posts", PostController
 end
 ```
-When we run `$ mix phoenix.routes` now, in addition to the routes we saw for users above, we get the following set of routes:
+
+现在运行 `$ mix phoenix.routes` 时，包含之前看到的用户路由器，我们得到以下这些路由条目：
 
 ```elixir
 . . .
@@ -254,9 +258,9 @@ user_post_path  PATCH   users/:user_id/posts/:id HelloPhoenix.PostController :up
 user_post_path  DELETE  users/:user_id/posts/:id HelloPhoenix.PostController :delete
 ```
 
-We see that each of these routes scopes the posts to a user id. For the first one, we will invoke the `PostController` `index` action, but we will pass in a `user_id`. This implies that we would display all the posts for that individual user only. The same scoping applies for all these routes.
+可以看到每一条文章资源都被限定在某个用户 id 之下。拿第一条来说，调用 `PostController` 的 `index` 动作时，还需要传入 `user_id`。意味着我们将只展示这个用户的文章。这个限制适用于其他所有路由。
 
-When calling path helper functions for nested routes, we will need to pass the ids in the order they came in the route definition. For the following `show` route, `42` is the `user_id`, and `17` is the `post_id`. Let's remember to alias our `HelloPhoenix.Endpoint` before we begin.
+调用嵌套路由助手时，我们需要按照路由定义的顺序传递这些 id。拿 `show` 条目举例，`42` 是 `user_id`， `17` 是 `post_id`。开始前先给 `HelloPHoenix.Endpoint` 别名下：
 
 ```elixir
 iex> alias HelloPhoenix.Endpoint
@@ -264,18 +268,18 @@ iex> HelloPhoenix.Router.Helpers.user_post_path(Endpoint, :show, 42, 17)
 "/users/42/posts/17"
 ```
 
-Again, if we add a key value pair to the end of the function call, it is added to the query string.
+同样，如果在函数调用的最后增加一个键值对，同样会加入到查询字符。
 
 ```elixir
 iex> HelloPhoenix.Router.Helpers.user_post_path(Endpoint, :index, 42, active: true)
 "/users/42/posts?active=true"
 ```
 
-### Scoped Routes
+### 限定的路由(Scoped Routes)
 
-Scopes are a way to group routes under a common path prefix and scoped set of plug middleware. We might want to do this for admin functionality, APIs, and especially for versioned APIs. Let's say we have user generated reviews on a site, and that those reviews first need to be approved by an admin. The semantics of these resources are quite different, and they might not share the same controller. Scopes enable us to segregate these routes.
+限定是将一组路由置于同一个路径前缀、或一组 plug 中间件的方法。管理员功能、API接口，尤其是对版本API，都需要这样的功能。假如网站有用户产生的测评，而这些测评需要先通过管理员的批准。这两个资源的语义显然是不同的，也可能不会使用同一个控制器。Scope 允许我们生成这样的路由。
 
-The paths to the user facing reviews would look like a standard resource.
+面向用户的测评看起来像标准资源。
 
 ```text
 /reviews
@@ -284,7 +288,7 @@ The paths to the user facing reviews would look like a standard resource.
 . . .
 ```
 
-The admin review paths could be prefixed with `/admin`.
+管理员评测路径以 `/admin` 为前缀。
 
 ```text
 /admin/reviews
@@ -293,7 +297,7 @@ The admin review paths could be prefixed with `/admin`.
 . . .
 ```
 
-We accomplish this with a scoped route that sets a path option to `/admin` like this one. For now, let's not nest this scope inside of any other scopes (like the `scope "/", HelloPhoenix do` one provided for us in a new app).
+可以像这样，将一组路由条目限定在 `/admin` 路径之下。现在，先别急嵌套资源(跟新生成的 `scope "/", HelloPhoenix do` 保持一致)。
 
 ```elixir
 scope "/admin" do
@@ -303,11 +307,11 @@ scope "/admin" do
 end
 ```
 
-Note that Phoenix will assume that the path we set ought to begin with a slash, so `scope "/admin" do` and `scope "admin" do` will both produce the same results.
+注意，Phoenix 将会假定我们设定的路径以斜杠开头，所以 `scope "/admin" do` 和 `scope "admin do` 结果是一样的。
 
-Note also, that the way this scope is currently defined, we need to fully qualify our controller name, `HelloPhoenix.Admin.ReviewController`. We'll fix that in a minute.
+再次注意，这种方式定义 scope，我们需要控制器的完整名称，`HelloPhoenix.Admin.ReviewController`。我们马上就会解决这个问题。
 
-Running `$ mix phoenix.routes` again, in addition to the previous set of routes we get the following:
+再次执行 `$ mix phoenix.routes，在上次的路有条目基础上，我们得到如下：
 
 ```elixir
 . . .
@@ -321,7 +325,7 @@ review_path  PATCH   /admin/reviews/:id HelloPhoenix.Admin.ReviewController :upd
 review_path  DELETE  /admin/reviews/:id HelloPhoenix.Admin.ReviewController :delete
 ```
 
-This looks good, but there is a problem here. Remember that we wanted both user facing reviews routes `/reviews` as well as the admin ones `/admin/reviews`. If we now include the user facing reviews in our router like this:
+看上去不错，但是还有个问题。我们想要的是面向用户的 `/reviews` 和面向管理员的 `/admin/reviews`。如果现在加入如下面向用户的路由：
 
 ```elixir
 scope "/", HelloPhoenix do
@@ -336,7 +340,7 @@ scope "/admin" do
 end
 ```
 
-and we run `$ mix phoenix.routes`, we get this output:
+执行 `$ mix phoenix.routes`, 得到如下：
 
 ```elixir
 . . .
@@ -359,7 +363,7 @@ review_path  PATCH   /admin/reviews/:id HelloPhoenix.Admin.ReviewController :upd
 review_path  DELETE  /admin/reviews/:id HelloPhoenix.Admin.ReviewController :delete
 ```
 
-The actual routes we get all look right, except for the path helper `review_path` at the beginning of each line. We are getting the same helper for both the user facing review routes and the admin ones, which is not correct. We can fix this problem by adding an `as: :admin` option to our admin scope.
+除了每行开头的 `review_path` 路径助手外，路由条目看上去没问题。面向用户和面向管理员的助手是一个，这肯定不对。在管理员 scope 下加入 `as: :admin` 选项就可以解决这个问题了。
 
 ```elixir
 scope "/", HelloPhoenix do
@@ -374,7 +378,7 @@ scope "/admin", as: :admin do
 end
 ```
 
-`$ mix phoenix.routes` now shows us we have what we are looking for.
+`$ mix phoenix.routes` 输出了我们想要的结果。
 
 ```elixir
 . . .
@@ -397,7 +401,7 @@ admin_review_path  PATCH   /admin/reviews/:id HelloPhoenix.Admin.ReviewControlle
 admin_review_path  DELETE  /admin/reviews/:id HelloPhoenix.Admin.ReviewController :delete
 ```
 
-The path helpers now return what we want them to as well. Run `$ iex -S mix` and give it a try yourself.
+路径助手现在也返回了我们想要的结果。自己运行 `$ iex -S mix` 来试一试：
 
 ```elixir
 iex(1)> HelloPhoenix.Router.Helpers.review_path(Endpoint, :index)
@@ -407,7 +411,7 @@ iex(2)> HelloPhoenix.Router.Helpers.admin_review_path(Endpoint, :show, 1234)
 "/admin/reviews/1234"
 ```
 
-What if we had a number of resources that were all handled by admins? We could put all of them inside the same scope like this:
+管理员有一堆资源需要处理怎么办？我们可以如下所示，把他们都放在一个 scope：
 
 ```elixir
 scope "/admin", as: :admin do
@@ -419,7 +423,7 @@ scope "/admin", as: :admin do
 end
 ```
 
-Here's what `$ mix phoenix.routes` tells us:
+下面是 `$ mix phoenix.routes` 输出的完整信息：
 
 ```elixir
 . . .
@@ -449,7 +453,7 @@ admin_review_path  DELETE  /admin/reviews/:id HelloPhoenix.Admin.ReviewControlle
   admin_user_path  DELETE  /admin/users/:id HelloPhoenix.Admin.UserController :delete
 ```
 
-This is great, exactly what we want, but we can make it even better. Notice that for each resource, we needed to fully qualify the controller name by prefixing it with `HelloPhoenix.Admin`. That's tedious and error prone. Assuming that the name of each controller begins with `HelloPhoenix.Admin`, then we can add a `HelloPhoenix.Admin` option to our scope declaration just after the scope path, and all of our routes will have the correct, fully qualified controller name.
+太好了，这真是我们想要的结果，还可以做的更好。可以看到每个资源我们都必须输入控制器 `HelloPhoenix.Admin` 全称。太啰嗦,且容易出错。假定每个控制器都以 `HelloPhoenix.Admin` 开头，我们可以在 scope 声明的路径后添加 `HelloPhoenix.Admin` 选项，这样所有的路由就对了，也是全称。
 
 ```elixir
 scope "/admin", HelloPhoenix.Admin, as: :admin do
