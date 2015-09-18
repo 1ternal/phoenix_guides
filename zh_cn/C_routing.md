@@ -465,11 +465,11 @@ scope "/admin", HelloPhoenix.Admin, as: :admin do
 end
 ```
 
-Now run `$ mix phoenix.routes` again and you can see that we get the same result as above when we qualified each controller name individually.
+再次运行 `$ mix phoenix.routes`，控制器单独写得到的结果是一样的。
 
-As an extra bonus, we could nest all of the routes for our application inside a scope that simply has an alias for the name of our Phoenix app, and eliminate the duplication in our controller names.
+更棒的是，给 scope 添加别名选项也可以嵌套，控制器名称也就不会重复了。
 
-Phoenix already does this now for us in the generated router for a new application (see beginning of this section). Notice here the use of `HelloPhoenix.Router` in the `defmodule` declaration:
+Phoenix 新生成的应用生成的路由就已经这么做了(参见本节开始部分)。留意定义 `defmodule` 时的 `HelloPhoenix.Router` 的使用。
 
 ```elixir
 defmodule HelloPhoenix.Router do
@@ -485,7 +485,7 @@ defmodule HelloPhoenix.Router do
 end
 ```
 
-Again `$ mix phoenix.routes` tells us that all of our controllers now have the correct, fully-qualified names.
+`$ mix phoenix.routes` 再次显示现在所有的控制器都是完整名称。
 
 ```elixir
 image_path   GET     /images            HelloPhoenix.ImageController :index
@@ -507,7 +507,7 @@ review_path  DELETE  /reviews/:id       HelloPhoenix.ReviewController :delete
   user_path  DELETE  /users/:id         HelloPhoenix.UserController :delete
 ```
 
-Scopes can also be nested, just like resources. Suppose that we had a versioned API with resources defined for images, reviews and users. We could then setup routes for the versioned API like this:
+和资源(resource)一样，scopes 也可以嵌套。假设我们有个版本 API 定义了 图片、测评和用户资源。可以这样设置：
 
 ```elixir
 scope "/api", HelloPhoenix.Api, as: :api do
@@ -521,7 +521,7 @@ scope "/api", HelloPhoenix.Api, as: :api do
 end
 ```
 
-`$ mix phoenix.routes` tells us that we have the routes we're looking for.
+`$ mix phoenix.routes` 显示了我们想要的路由。
 
 ```elixir
  api_v1_image_path  GET     /api/v1/images HelloPhoenix.Api.V1.ImageController :index
@@ -549,12 +549,14 @@ api_v1_review_path  DELETE  /api/v1/reviews/:id HelloPhoenix.Api.V1.ReviewContro
                     PUT     /api/v1/users/:id HelloPhoenix.Api.V1.UserController :update
   api_v1_user_path  DELETE  /api/v1/users/:id HelloPhoenix.Api.V1.UserController :delete
 ```
-Interestingly, we can use multiple scopes with the same path as long as we are careful not to duplicate routes. If we do duplicate a route, we'll get this familiar warning.
+
+有趣的是，同一个路径下可以使用多个 scope，小心路由别重合就行。如果有重复路由，会得到这个熟悉的警告：
 
 ```console
 warning: this clause cannot match because a previous clause at line 16 always matches
 ```
-This router is perfectly fine with two scopes defined for the same path.
+
+同一路径下定义俩 scope 的路由非常完美。
 
 ```elixir
 defmodule HelloPhoenix.Router do
@@ -574,7 +576,8 @@ defmodule HelloPhoenix.Router do
   . . .
 end
 ```
-And when we run `$ mix phoenix.routes`, we see the following output.
+
+运行 `$ mix phoenix.routes` 就可以看到这样的结果：
 
 ```elixir
 user_path  GET     /users           HelloPhoenix.UserController :index
@@ -595,53 +598,52 @@ post_path  PATCH   /posts/:id       AnotherApp.PostController :update
 post_path  DELETE  /posts/:id       AnotherApp.PostController :delete
 ```
 
-### Pipelines
+### 管道(Pipelines)
 
-We have come quite a long way in this guide without talking about one of the first lines we saw in the router - `pipe_through :browser`. It's time to fix that.
+教程到这里已经很长了，还没提到路由器看到的第一行 `pipe_through :browser`。时候解决这个问题了。
 
-Remember in the [Overview Guide](http://www.phoenixframework.org/docs/overview) when we described plugs as being stacked and executable in a pre-determined order, like a pipeline? Now we're going to take a closer look at how these plug stacks work in the router.
+记得在[总览向导](http://www.phoenixframework.org/docs/overview)说到 plug 堆叠一起，以定好的顺序执行，像流水线一样？
 
-Pipelines are simply plugs stacked up together in a specific order and given a name. They allow us to customize behaviors and transformations related to the handling of requests. Phoenix provides us with some default pipelines for a number of common tasks. In turn we can customize them as well as create new pipelines to meet our needs.
+管道就是有名称的多个 plug 中间件以特定的顺序堆叠在一起的栈。可自定义行为，也可以对相关的请求进行变换。Phoenix 给我们提供了一定数量的默认管道。可根据需求自定义或创建新的管道。
 
-A newly generated Phoenix application defines two pipelines called `:browser` and `:api`. We'll get to those in a minute, but first we need to talk about the plug stack in the Endpoint plugs.
+新生成的 Phoenix 应用定义了 `:browser` 和 `:api` 这两个管道。稍后会讲到它们，但是现在我们需要讲一讲 Endpoint 的 plug 栈。
 
-##### The Endpoint Plugs
+##### Endpoint Plugs
 
-Endpoints organize all the plugs common to every request, and apply them before dispatching into the router(s) with their underlying `:browser`, `:api`, and custom pipelines. The default Endpoint plugs do quite a lot of work. Here they are in order.
+Endpoint 将所有通用的 plug 应用于每个请求，分发至路由器之前，再把 `:browser`，`:api` 和 自定义的管道应用到请求上。默认的 Endpoint plug 中间件做了很多工作，下面依次介绍：
 
-- [Plug.Static](http://hexdocs.pm/plug/Plug.Static.html) - serves static assets. Since this plug comes before the logger, serving of static assets is not logged
+- [Plug.Static](http://hexdocs.pm/plug/Plug.Static.html) - 提供静态资源。因为此中间件在 logger 之前，所以它的信息不会被日志记录。
 
-- [Plug.Logger](http://hexdocs.pm/plug/Plug.Logger.html) - logs incoming requests
+- [Plug.Logger](http://hexdocs.pm/plug/Plug.Logger.html) - 记录连入请求日志。
 
-- [Phoenix.CodeReloader](http://hexdocs.pm/phoenix/Phoenix.CodeReloader.html) - a plug that enables code reloading for all entries in the web directory. It is configured directly in the Phoenix application
+- [Phoenix.CodeReloader](http://hexdocs.pm/phoenix/Phoenix.CodeReloader.html) - 为 web 目录下所有文件提供代码重载功能。由 Phoenix 应用直接配置。
 
-- [Plug.Parsers](http://hexdocs.pm/plug/Plug.Parsers.html) - parses the request body when a known parser is available. By default parsers urlencoded, multipart and json (with poison). The request body is left untouched when the request content-type cannot be parsed
+- [Plug.Parsers](http://hexdocs.pm/plug/Plug.Parsers.html) - 解析已知、可用的请求内容(request body)。默认解析器为 urlencoded，multipart 和 json(使用 poison)。当请求的内容类型(content-type)不能被解析，会原封不动的传递给下一个中间件。
 
-- [Plug.MethodOverride](http://hexdocs.pm/plug/Plug.MethodOverride.html) - converts the request method to
-  PUT, PATCH or DELETE for POST requests with a valid `_method` parameter
+- [Plug.MethodOverride](http://hexdocs.pm/plug/Plug.MethodOverride.html) - 将 POST 的 PUT, PATCH 或 DELETE 请求方法转换为合法的 `_method` 参数
 
-- [Plug.Head](http://hexdocs.pm/plug/Plug.Head.html) - converts HEAD requests to GET requests and strips the response body
+- [Plug.Head](http://hexdocs.pm/plug/Plug.Head.html) - 转换 HEAD 请求到 GET 请求，并移除响应内容(response body)。
 
-- [Plug.Session](http://hexdocs.pm/plug/Plug.Session.html) - a plug that sets up session management.
-  Note that `fetch_session/2` must still be explicitly called before using the session as this plug just sets up how the session is fetched
+- [Plug.Session](http://hexdocs.pm/plug/Plug.Session.html) - 设置 session 管理。
+  注意在使用 session 管理中间件设定如何获取 session 之前， `fetch_session/2` 必须明确调用。
 
-- [Plug.Router](http://hexdocs.pm/plug/Plug.Router.html) - plugs a router into the request cycle
+- [Plug.Router](http://hexdocs.pm/plug/Plug.Router.html) - 将路由器加入请求循环(request cycle)。
 
-##### The `:browser` and `:api` Pipelines
+##### `:browser` 和 `:api` 管道
 
-Phoenix defines two other pipelines by default, `:browser` and `:api`. The router will invoke these after it matches a route, assuming we have called `pipe_through/1` with them in the enclosing scope.
+Phoenix 定义了其他两个默认的管道，`:browser` 和 `:api`。如果在 scope 区间内使用 `pipe_through` 定义了它们， 路由匹配后才会调用。
 
-As their names suggest, the `:browser` pipeline prepares for routes which render requests for a browser. The `:api` pipeline prepares for routes which produce data for an api.
+和名称说明的一样，`:browser` 管道是为渲染到浏览器准备的。`:api` 管道是为生产 api 数据准备的。
 
-The `:browser` pipeline has five plugs: `plug :accepts, ["html"]` which defines the request format or formats which will be accepted, `:fetch_session`, which, naturally, fetches the session data and makes it available in the connection, `:fetch_flash` which retrieves any flash messages which may have been set, as well as `:protect_from_forgery` and `:put_secure_browser_headers`, which protects form posts from cross site forgery.
+`:browser` 管道有五个中间件: `plug :accepts, ["html"]` 定义了请求格式 或者说是接受哪些格式，`:fetch_session` 很自然就是获取 session 数据在连接中使用，`:fetch_flash` 取出所有可能被设定的 flash 信息，`:protect_from_forgery` 和 `:put_secure_browser_headers` 则用于保护跨扎伪造。
 
-Currently, the `:api` pipeline only defines `plug :accepts, ["json"]`.
+目前，`:api` 管道只定义了 `plug :accepts, ["json"]`
 
-The router invokes a pipeline on a route defined within a scope. If no scope is defined, the router will invoke the pipeline on all the routes in the router. If we call `pipe_through/1` from within a nested scope, the router will invoke it on the inner scope only.
+路由器调用的管道定义在 scope 内。如果没有定义 scope,路由器将会在所有的路由条目上应用管道。如果在嵌套的 scope 内调用 `pipe_through/1` 管道则只应用于内部 scope。
 
-Those are a lot of words bunched up together. Let's take a look at some examples to untangle their meaning.
+已经讲了很多。看些例子有助于我们理解。
 
-Here's another look at the router from a newly generated Phoenix application, this time with the api scope uncommented back in and a route added.
+这是一个新的由 Phoenix 应用生成的路由，取消了 api scope 注释并添加了一条路由。
 
 ```elixir
 defmodule HelloPhoenix.Router do
@@ -674,13 +676,13 @@ defmodule HelloPhoenix.Router do
 end
 ```
 
-When the server accepts a request, the request will always first pass through the plugs in our Endpoint, after which it will attempt to match on the path and HTTP verb.
+服务器接受到一个请求时，请求将先通过 Endpoint 的中间件，再尝试匹配路径和 HTTP 动词。
 
-Let's say that the request matches our first route: a GET to `/`. The router will first pipe that request through the `:browser` pipeline - which will fetch the session data, fetch the flash, and execute forgery protection - before it dispatches the request to the `PageController` `index` action.
+假设这个请求匹配了我们第一条路由：GET 请求 `\`。路由器将请求先送到 `:browser` 管道，进行执行获取 session 数据，取 flash 和执行伪造保护，然后再分发到 `PageController` 的 `index` 动作。
 
-Conversely, if the request matches any of the routes defined by the `resources/2` macro, the router will pipe it through the `:api` pipeline - which currently does nothing - before it dispatches further to the correct action of the `HelloPhoenix.ReviewController`.
+相应的，如果请求匹配任何 `resource/2` 宏定义的路由，将会送到目前还没什么作用的`:api` 管道，然后再分发至 `HelloPhoenix.ReviewController` 控制器。
 
-If we know that our application only renders views for the browser, we can simplify our router quite a bit by removing the `api` stuff as well as the scopes:
+如果我们只需要为浏览器渲染，那路由可以简化一些，移除 `api` 和相关的 scope 路由即可。
 
 ```elixir
 defmodule HelloPhoenix.Router do
@@ -701,9 +703,10 @@ defmodule HelloPhoenix.Router do
   resources "reviews", HelloPhoenix.ReviewController
 end
 ```
-Removing all scopes forces the router to invoke the `:browser` pipeline on all routes.
 
-Let's stretch these ideas out a little bit more. What if we need to pipe requests through both `:browser` and one or more custom pipelines? We simply `pipe_through` a list of pipelines, and Phoenix will invoke them in order.
+移除所有的 scope 会强制调用 `:browser` 这个管道。
+
+再扩展一点，如果需要经过 `:browser` 和另外一个或更多的自定义管道怎么办？`pipe_through` 管道列表即可，Phoenix 将会按顺序调用。
 
 ```elixir
 defmodule HelloPhoenix.Router do
@@ -727,7 +730,7 @@ defmodule HelloPhoenix.Router do
 end
 ```
 
-Here's another example where nested scopes have different pipelines:
+这儿还有一个嵌套 scope 有不同 通道的例子：
 
 ```elixir
 defmodule HelloPhoenix.Router do
@@ -756,11 +759,12 @@ defmodule HelloPhoenix.Router do
 end
 ```
 
-In general, the scoping rules for pipelines behave as you might expect. In this example, all routes will pipe through the `:browser` pipeline, because the `/` scope encloses all the routes. Only the `reviews` resources routes will pipe through the `:review_checks` pipeline, because we declare `pipe_through :review_checks` within the `/reviews` scope, where the `reviews` resources routes are located.
+总之，通道的 scope 规则和你期待的一致。这个例子，所有路由都会通过 `:browser` 通道，因为 `/` scope 包含了所有路由。因为在 `/reviews` scope，也是 `review` 资源所在的 scope 宣告了 `pipe_through :review_checks`，所以 `review` 资源会通过 `:review_checks` 通道。
 
-##### Creating New Pipelines
+##### 创建新通道
 
-Phoenix allows us to create our own custom pipelines anywhere in the router. To do so, we call the `pipeline/2` macro with these arguments: an atom for the name of our new pipeline and a block with all the plugs we want in it.
+Phoenix 允许我们在路由任何地方创建自己的通道。调用 `pipeline/2` 宏和这俩参数：新通道的原子名称和一个我们想要调用的 plug 中间件 block。
+
 
 ```elixir
 defmodule HelloPhoenix.Router do
@@ -787,11 +791,11 @@ defmodule HelloPhoenix.Router do
 end
 ```
 
-### Channel Routes
+### Channel 路由
 
-Channels are a very exciting, real-time component of the Phoenix framework. Channels handle incoming and outgoing messages broadcast over a socket for a given topic. Channel routes, then, need to match requests by socket and topic in order to dispatch to the correct channel. (For a more detailed description of channels and their behavior, please see the [Channel Guide](http://www.phoenixframework.org/docs/channels).)
+Channels 是 Phoenix 框架的一个令人兴奋的实时组件。Channel 通过 socket 广播给定的话题(topic)的出入站消息。为了分发至正确的 channel 频道，Channel 路由需要匹配socket请求和话题(请查看[Channel 向导](http://www.phoenixframework.org/docs/channels)获得更详细的信息)。
 
-We mount socket handlers in our endpoint at `lib/hello_phoenix/endpoint.ex`. Socket handlers take care of authentication callbacks and channel routes.
+在 `lib/hello_phoenix\endpoint.ex` 挂载 socket 处理器到 endpoint。Socket 处理器负责认证回调和 channel 路由。
 
 ```elixir
 defmodule HelloPhoenix.Endpoint do
@@ -802,7 +806,7 @@ defmodule HelloPhoenix.Endpoint do
 end
 ```
 
-Next, we need to open our `web/channels/user_socket.ex` file and use the `channel/3` macro to define our channel routes. The routes will match a topic pattern to a channel to handle events. If we have a channel module called `RoomChannel` and a topic called `"rooms:*"`, the code to do this is straightforward.
+接着，我们需要打开 `web/channels/user_socket.ex` 文件，使用 `channel/3` 宏定义 channel 路由。路由匹配一个话题模式(topic pattern)到一个 channel 来处理事件。如果我们的 channel 模块叫 `RoomChannel`，话题叫 `"rooms:*"`，那要写的代码很直接：
 
 ```elixir
 defmodule HelloPhoenix.UserSocket do
@@ -813,37 +817,36 @@ defmodule HelloPhoenix.UserSocket do
 end
 ```
 
-Topics are just string identifiers. The form we are using here is a convention which allows us to define topics and subtopics in the same string - "topic:subtopic". The `*` is a wildcard character which allows us to match on any subtopic, so `"rooms:lobby"` and `"rooms:kitchen"` would both match this route.
+话题(topic)就是字符串标示。这里惯用法，定义话题和子话题在同一个字符串 - "topic:subtopic"。`*` 号是通配符，允许匹配任何子话题，所以 `"rooms:lobby"` 和 `"rooms:kitchen"` 都会匹配到这个路由。
 
-Phoenix abstracts the socket transport layer and includes two transport mechanisms out of the box - WebSockets and Long-Polling. If we wanted to make sure that our channel is handled by only one type of transport, we could specify that using the `via` option, like this.
+Phoenix 抽象了 socket 传输层，包含了两个传输机制 - WebSocket 和 Long-Polling。如果我们确认只使用一种传输机制，可以使用 `via` 选项来指定，像这样：
 
 ```elixir
 channel "rooms:*", HelloPhoenix.RoomChannel, via: [Phoenix.Transports.WebSocket]
 ```
 
-Each socket can handle requests for multiple channels.
+每个 socket 可以处理多个 channel 请求。
 
 ```elixir
 channel "rooms:*", HelloPhoenix.RoomChannel, via: [Phoenix.Transports.WebSocket]
 channel "foods:*", HelloPhoenix.FoodChannel
 ```
 
-We can mount multiple socket handlers in our endpoint:
+我们可以在 endpoint 挂载多个 socket 处理器:
 
 ```elixir
 socket "/socket", HelloPhoenix.UserSocket
 socket "/admin-socket", HelloPhoenix.AdminSocket
 ```
 
+### 总结
 
-### Summary
-
-Routing is a big topic, and we have covered a lot of ground here. The important points to take away from this guide are:
-- Routes which begin with an HTTP verb name expand to a single clause of the match function.
-- Routes which begin with 'resources' expand to 8 clauses of the match function.
-- Resources may restrict the number of match function clauses by using the `only:` or `except:` options.
-- Any of these routes may be nested.
-- Any of these routes may be scoped to a given path.
-- Using the `as:` option in a scope can reduce duplication.
-- Using the helper option for scoped routes eliminates unreachable paths.
-- Scoped routes may also be nested.
+路由是个大话题，我们这里覆盖了不少内容。本篇提到的重点是：
+- 以 HTTP 动词开始的路由展开为单条 match 函数。
+- 以 `resource` 开始的路由展开为 8 条 match 函数子句。
+- 资源可以使用 `only:` 或 `except:` 选项限制 match 函数子句的数量。
+- 任何路由都可以被嵌套。
+- 任何路由都可以限定在给定的路径下。
+- scope 使用 `as:` 选项消除重复。
+- scope 使用帮助选项消除不可及路径。
+- 被限定的路由也可以嵌套。
