@@ -1,8 +1,8 @@
-Phoenix controllers act as intermediary modules. Their functions - called actions - are invoked from the router in response to HTTP requests. The actions, in turn, gather all the necessary data and perform all the necessary steps before invoking the view layer to render a template or returning a JSON response.
+Phoenix 控制器作为协调模块，它的函数 - 称为动作(actions)被路由器调用，响应 HTTP 请求。所谓的动作，在调用视图层渲染模板或返回 JSON 响应之前，会收集所有必要的数据并执行所有必要的步骤。
 
-Phoenix controllers also build on the Plug package, and are themselves plugs. Controllers provide the functions to do almost anything we need to in an action. If we do find ourselves looking for something that Phoenix controllers don't provide, however, we might find what we're looking for in Plug itself. Please see the [Plug Guide](http://www.phoenixframework.org/docs/understanding-plug) or [Plug Documentation](http://hexdocs.pm/plug/) for more information.
+Phoenix 的控制器也基于 Plug 包，本身也是 plug 中间件。控制器提供了动作中几乎所有我们需要的功能。如果我们发现有些功能 Phoenix 控制器没有提供，或许我们找的东西在 Plug 中。请查看 [Plug 向导](http://www.phoenixframework.org/docs/understanding-plug) or [Plug 文档](http://hexdocs.pm/plug/) 获取更多信息。
 
-A newly generated Phoenix app will have a single controller, the `PageController`, which can be found at `web/controllers/page_controller.ex` and looks like this.
+新生成的 Phoenix 应用有一个单独的控制器，`PageController`，可以在 `web/controllers/page_controller.ex` 看到它的内容。
 
 ```elixir
 defmodule HelloPhoenix.PageController do
@@ -14,26 +14,27 @@ defmodule HelloPhoenix.PageController do
 end
 ```
 
-The first line below the module definition invokes the `__using__/1` macro of the `HelloPhoenix.Web` module, which imports some useful modules.
+模块定义下的第一行调用 `HelloPhoenix` 模块的 `__using__/1` 宏，用于导入一些有用的模块。
 
-The `PageController` gives us the `index` action to display the Phoenix welcome page associated with the default route Phoenix defines in the router.
+`PageController` 的 `index` 与相关的定义在 Phoenix 路由的默认路由一起显示出了 Phoenix 欢迎页面。
 
-### Actions
-Controller actions are just functions. We can name them anything we like as long as they follow Elixir's naming rules. The only requirement we must fulfill is that the action name matches a route defined in the router.
+### 动作
 
-For example, in `web/router.ex` we could change the action name in the default route that Phoenix gives us in a new app from index:
+控制器动作就是函数。只要遵循 Elixir 的命名约束，我们将其命名为任何名字。唯一需要满足的就是动作名要和定义在路由里的名称相匹配。
+
+例如，在 `web/router.ex` 我们可以更改 Phoenix 给我们的默认路由 index:
 
 ```elixir
 get "/", HelloPhoenix.PageController, :index
 ```
 
-To test:
+到 test:
 
 ```elixir
 get "/", HelloPhoenix.PageController, :test
 ```
 
-As long as we change the action name in the `PageController` to `test` as well, the welcome page will load as before.
+只要修改 `PageController` 的动作名为 `test`，欢迎页面和之前一样。
 
 ```elixir
 defmodule HelloPhoenix.PageController do
@@ -45,21 +46,21 @@ defmodule HelloPhoenix.PageController do
 end
 ```
 
-While we can name our actions whatever we like, there are conventions for action names which we should follow whenever possible. We went over these in the [Routing Guide](http://www.phoenixframework.org/docs/routing), but we'll take another quick look here.
+虽然我们可以随意命名动作，有一些惯用名我们应该尽可能的遵循。我们在 [路由向导](http://www.phoenixframework.org/docs/routing)见过，这里再快速看一看.
 
-- index   - renders a list of all items of the given resource type
-- show    - renders an individual item by id
-- new     - renders a form for creating a new item
-- create  - receives params for one new item and saves it in a datastore
-- edit    - retrieves an individual item by id and displays it in a form for editing
-- update  - receives params for one edited item and saves it to a datastore
-- delete  - receives an id for an item to be deleted and deletes it from a datastore
+- index   - 渲染给定资源类型所有元素的列表
+- show    - 渲染单独的给定 id 的元素
+- new     - 渲染一个用于创建新元素的表单
+- create  - 为新元素接收参数并存入数据存储
+- edit    - 检索给定 id 元素并显示在表单中用于编辑
+- update  - 为编辑过的元素接收参数并存储数据存储
+- delete  - 接收元素 id，并将其从数据存储中删除
 
-Each of these actions takes two parameters, which will be provided by Phoenix behind the scenes.
+每个动作接收由 Phoenix 提供的两个参数。
 
-The first parameter is always `conn`, a struct which holds information about the request such as the host, path elements, port, query string, and much more. `conn`, comes to Phoenix via Elixir's Plug middleware framework. More detailed info about `conn` can be found in [plug's documentation](http://hexdocs.pm/plug/Plug.Conn.html).
+第一个参数总是 `conn`，它是一个存有像主机(host)，路径元素(path elements)，端口(port)、查询字符串(query string)等更多信息的结构体。`conn`，由 Elixir 的 Plug 中间件框架提供给 Phoenix。更多关于 `conn` 详细信息尽在[plug 文档](http://hexdocs.pm/plug/Plug.Conn.html)。
 
-The second parameter is `params`. Not surprisingly, this is a map which holds any parameters passed along in the HTTP request. It is a good practice to pattern match against params in the function signature to provide data in a simple package we can pass on to rendering. We saw this in the [Adding Pages guide](http://www.phoenixframework.org/docs/adding-pages) when we added a messenger parameter to our `show` route in `web/controllers/hello_controller.ex`.
+第二个参数是 `params`。没有悬念的，它是存有所有通过 HTTP 请求传递的参数。模式匹配函数签名的参数，简单解包后用于渲染是比较好的实践。我们在[添加新页面](http://www.phoenixframework.org/docs/adding-pages) `web/controllers/hello_controller.ex` 文件中的传递 messenger 参数到 `show` 路由已经见识过。
 
 ```elixir
 defmodule HelloPhoenix.HelloController do
@@ -71,23 +72,23 @@ defmodule HelloPhoenix.HelloController do
 end
 ```
 
-In some cases - often in `index` actions, for instance - we don't care about parameters because our behavior doesn't depend on them. In those cases, we don't use the incoming params, and simply prepend the variable name with an underscore, `_params`. This will keep the compiler from complaining about the unused variable while still keeping the correct arity.
+某些情况下 - 通常在 `index` 动作，例如 - 我们不关心参数，因为我们的行为并不取决参数。这种情况，我们不使用传来的参数，知识简单的在变量名前加个下划线, `_params`。解决了既有正确的参数量又有不使用的变量的情况下避免编译器抱怨。
 
-### Gathering Data
+### 收集数据
 
-While Phoenix does not ship with its own data access layer, the Elixir project [Ecto](http://hexdocs.pm/ecto) provides a very nice solution for those using the [Postgres](http://www.postgresql.org/) relational database. (There are plans to offer other adapters for Ecto in the future.) We cover how to use Ecto in a Phoenix project in the [Ecto Models Guide](http://www.phoenixframework.org/docs/ecto-models).
+因为 Phoenix 没有自带数据接入层，Elixir 项目 [Ecto](http://hexdocs.pm/ecto) 使用关系型数据库 [Postgres](http://www.postgresql.org/) 为它提供了非常好的解决方案(未来 Ecto 计划提供其他的转换器)。Phoenix 项目中如何使用 Ecto 会在 [Ecto 模型向导](http://www.phoenixframework.org/docs/ecto-models) 讲到。
 
-Of course, there are many other data access options. [Ets](http://www.erlang.org/doc/man/ets.html) and [Dets](http://www.erlang.org/doc/man/ets.html) are key value data stores built into [OTP](http://www.erlang.org/doc/). OTP also provides a relational database called [mnesia](http://www.erlang.org/doc/man/mnesia.html) with its own query language called QLC. Both Elixir and Erlang also have a number of libraries for working with a wide range of popular data stores.
+当然，还有很多其他的数据接入选项。[Ets](http://www.erlang.org/doc/man/ets.html) 和 [Dets](http://www.erlang.org/doc/man/ets.html) 是 [OTP](http://www.erlang.org/doc/) 内建的键值存储。OTP 也提供了一个关系型数据库 [mnesia](http://www.erlang.org/doc/man/mnesia.html) 和它自带的查询语言 QLC。Elixir 和 Erlang 也有很多用于流行的数据存储的库。
 
-The data world is your oyster, but we won't be covering these options in these guides.
+你自己可以掌控数据，教程将不会覆盖它们。
 
-### Flash Messages
+### Flash 信息
 
-There are times when we need to communicate with users during the course of an action. Maybe there was an error updating a model. Maybe we just want to welcome them back to the application. For this, we have flash messages.
+很多时候我们需要通过动作跟用户通讯。或许是一个模型更新错误信息，也可能我们只是想欢迎回到应用。我们可以使用 flash 信息来完成。
 
-The `Phoenix.Controller` module provides the `put_flash/3` and `get_flash/2` functions to help us set and retrieve flash messages as a key value pair. Let's set two flash messages in our `HelloPhoenix.PageController` to try this out.
+`Phoenix.Controller` 模块提供了 `put_flash/3` 和 `get_flash/2` 函数帮助我们设定和检索 flash 键值对信息。
 
-To do this we modify the `index` action as follows:
+为此我们需要修改 `index` 动作如下：
 
 ```elixir
 defmodule HelloPhoenix.PageController do
@@ -101,49 +102,52 @@ defmodule HelloPhoenix.PageController do
 end
 ```
 
-The `Phoenix.Controller` module is not particular about the keys we use. As long as we are internally consistent, all will be well. `:info` and `:error`, however, are common.
+`Phoenix.Controller` 模块不是特别关心我们使用什么键。只要我们内部一致就好。`:info` 和 `:error` 都是比较常见的。
 
-In order to see our flash messages, we need to be able to retrieve them and display them in a template/layout. One way to do the first part is with `get_flash/2` which takes `conn` and the key we care about. It then returns the value for that key.
+为了看到我们的 flash 信息，我们需要能够检索到它们并在模板/视图显示。完成第一部分要做的就是 `get_flash/2` 接收 `conn` 和我们关系的键。它就会返回这个键的值。
 
-Fortunately, our application layout, `web/templates/layout/app.html.eex`, already has markup for displaying flash messages.
+幸运的是，我们的应用布局文件 `web/templates/layout/app.html.eex` 已经有了显示 flash 信息的标记。
 
 ```html
 <p class="alert alert-info" role="alert"><%= get_flash(@conn, :info) %></p>
 <p class="alert alert-danger" role="alert"><%= get_flash(@conn, :error) %></p>
 ```
 
-When we reload the [Welcome Page](http://localhost:4000/), our messages should appear just above "Welcome to Phoenix!"
+当我们刷新 [欢迎页面](http://localhost:4000/)，我们的信息就会出现在 "Welcome to Phoenix!" 之上。
 
-Besides `put_flash/3` and `get_flash/2`, the `Phoenix.Controller` module has another useful function worth knowing about. `clear_flash/1` takes only `conn` and removes any flash messages which might be stored in the session.
+除了 `put_flash/3` 和 `get_flash/2` 之外，`Phoenix.Controller` 模块还有另外一个值得知道的有用的函数。`clear_flash/1` 只接收 `conn` 参数，移除所有可能存储在 session 中的 falsh 信息。
 
-### Rendering
+### 渲染
 
-Controllers have several ways of rendering content. The simplest is to render some plain text using the `text/2` function which Phoenix provides.
+控制器有多种渲染内容的方式。渲染文字最简单的方式是使用 Phoenix 提供的 `text/2` 函数。
 
-Let's say we have a `show` action which receives an id from the params map, and all we want to do is return some text with the id. For that, we could do the following.
+如果我们有一个 `show` 动作从参数 map 收到一个 id，我们所要做的是用 id 返回一些文本，可以这么做。
 
 ```elixir
 def show(conn, %{"id" => id}) do
   text conn, "Showing id #{id}"
 end
 ```
-Assuming we had a route for `get "/our_path/:id"` mapped to this `show` action, going to `/our_path/15` in your browser should display `Showing id 15` as plain text without any HTML.
 
-A step beyond this is rendering pure JSON with the `json/2` function. We need to pass it something that the [Poison library](https://github.com/devinus/poison) can parse into JSON, such as a map. (Poison is one of Phoenix's dependencies.)
+假设我们有一个 `get "/our_path/:id` 路由映射到这个 `show` 动作，浏览器访问 `/our_path/15` 应该显示 `Showing id 15` 文本，无任何 HTML。
+
+更近一步的是使用 `json/2` 渲染纯 JSON。我们需要传递 [Posion 库](https://github.com/devinus/poison) 可以解析的的东西，例如 map（Poison 是 Phoenix 其中一个依赖)。
 
 ```elixir
 def show(conn, %{"id" => id}) do
   json conn, %{id: id}
 end
 ```
-If we again visit `our_path/15` in the browser, we should see a block of JSON with the key `id` mapped to the number `15`.
+
+如果我们再次在浏览器访问 `our_path/15` ，我们应该看到一个 键 `id` 映射为 `15` 值的 JSON。
 
 ```elixir
 {
   id: "15"
 }
 ```
-Phoenix controllers can also render HTML without a template. As you may have already guessed, the `html/2` function does just that. This time, we implement the `show` action like this.
+
+Phoenix 控制器不用模板也可以渲染 HTML。跟你猜的一样， `html/2` 函数就是这个作用。这次，我们这样实现 `show` 动作。
 
 ```elixir
 def show(conn, %{"id" => id}) do
@@ -160,17 +164,18 @@ def show(conn, %{"id" => id}) do
 end
 ```
 
-Hitting `/our_path/15` now renders the HTML string we defined in the `show` action, with the value `15` interpolated. Note that what we wrote in the action is not an `eex` template. It's a multi-line string, so we interpolate the `id` variable like this `#{id}` instead of this `<%= id %>`.
+访问 `/our_path/15` 现在渲染的是我们定义在 `show` 动作内的 HTML 字符，`15` 字符也已被插入。注意我们写在动作内的不是 `eex` 模板。它是一个多行字符串，这样我们就可以像 `#{id}` 这样，而不是 `<%= id %>` 插入 `id` 变量。
 
 It is worth noting that the `text/2`, `json/2`, and `html/2` functions require neither a Phoenix view, nor a template to render.
+`text/2`, `json/2` 和 `html/2` 函数既不需要视图也不需要模板来渲染。
 
-The `json/2` function is obviously useful for writing APIs, and the other two may come in handy, but rendering a template into a layout with values we pass in is a very common case.
+`json/2` 函数明显对编写 API 有用，其他两个非常便携，但是将一个模板和传递给它变量通过布局渲染是非常常见的事情。
 
-For this, Phoenix provides the `render/3` function.
+为此，Phoenix 提供了 `render/3` 函数。
 
-Interestingly, `render/3` is defined in the `Phoenix.View` module instead of `Phoenix.Controller`, but it is aliased in `Phoenix.Controller` for convenience.
+有趣的是,`render/3` 定义在 `Phoenix.View` 模块内，而不是 `Phoenix.Controller`内，只是方便起见别名在了 `Phoenix.Controller`。
 
-We have already seen the render function in the [Adding Pages Guide](http://www.phoenixframework.org/docs/adding-pages). Our `show` action in `web/controllers/hello_controller.ex` looked like this.
+在[添加新页面](http://www.phoenixframework.org/docs/adding-pages)，我们已经见过渲染函数。`web/controlleres/hello_controller.ex` 的 `show` 动作如下：
 
 ```elixir
 defmodule HelloPhoenix.HelloController do
@@ -182,9 +187,10 @@ defmodule HelloPhoenix.HelloController do
 end
 ```
 
-In order for the `render/3` function to work correctly, the controller must have the same root name as the individual view. The individual view must also have the same root name as the template directory where the `show.html.eex` template lives. In other words, the `HelloController` requires `HelloView`, and `HelloView` requires the existence of the `web/templates/hello` directory, which must contain the `show.html.eex` template.
+为了让 `render/3` 正常工作，控制器必须和单独视图有相同的根名称。单独的视图也必须和 `show.html.eex` 存在的模板文件夹有相同的根名称。换句话说，`HelloController` 需要 `HelloView`，`HelloView` 需要 `web/templates/hello` 文件夹，这个文件夹必须包含 `show.html.eex` 模板。
 
 `render/3` will also pass the value which the `show` action received for `messenger` from the params hash into the template for interpolation.
+`render/3` 也将传递 `show` 动作从 `messenger` 接收到的值，从参数哈希(params hash) 给模板进行插值。
 
 If we need to pass values into the template when using `render`, that's easy. We can pass a dictionary like we've seen with `messenger: messenger`, or we can use `Plug.Conn.assign/3`, which conveniently returns `conn`.
 
