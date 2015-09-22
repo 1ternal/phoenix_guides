@@ -192,7 +192,7 @@ end
 `render/3` will also pass the value which the `show` action received for `messenger` from the params hash into the template for interpolation.
 `render/3` 也将传递 `show` 动作从 `messenger` 接收到的值，从参数哈希(params hash) 给模板进行插值。
 
-If we need to pass values into the template when using `render`, that's easy. We can pass a dictionary like we've seen with `messenger: messenger`, or we can use `Plug.Conn.assign/3`, which conveniently returns `conn`.
+如果需要使用 `render` 传递数据给模板，很简单，我们可以传递一个如之前所见 `messenger: messenger` 类似的字典，或者使用方便返回 `conn` 的 `Plug.Conn.assign/3` 函数。
 
 ```elixir
 def index(conn, _params) do
@@ -201,11 +201,12 @@ def index(conn, _params) do
   |> render("index.html")
 end
 ```
-Note: The `Phoenix.Controller` module imports `Plug.Conn`, so shortening the call to `assign/3` works just fine.
 
-We can access this message in our `index.html.eex` template, or in our layout, with this `<%= @message %>`.
+注意：`Phoenix.Controller` 模块导入了 `Plug.Conn`，所以直接调用 `assign/3` 可以正常工作。
 
-Passing more than one value in to our template is as simple as connecting `assign/3` functions together in a pipeline.
+我们可以在 `index.html.eex` 模板中获取这个信息，也可以在布局中使用 `<%= @message %>` 获取。
+
+向模板中传递多个值与使用管道将 `assign/3` 连接起来一样简单。
 
 ```elixir
 def index(conn, _params) do
@@ -215,9 +216,10 @@ def index(conn, _params) do
   |> render("index.html")
 end
 ```
-With this, both `@message` and `@name` will be available in the `index.html.eex` template.
 
-What if we want to have a default welcome message that some actions can override? That's easy, we just use `plug` and transform `conn` on its way towards the controller action.
+这样，`@message` 和 `@name` 在模板 `index.html.eex` 中就都可用了。
+
+我们需要一个某些动作可以覆盖的默认欢迎信息该怎么办呢？很简单，使用 `plug` 并在控制器动作之前转换 `conn` 即可。
 
 ```elixir
 plug :assign_welcome_message, "Welcome Back"
@@ -233,7 +235,7 @@ defp assign_welcome_message(conn, msg) do
 end
 ```
 
-What if we want to plug `assign_welcome_message`, but only for some of our actions? Phoenix offers a solution to this by letting us specify which actions a plug should be applied to. If we only wanted `plug :assign_welcome_message` to work on the `index` and `show` actions, we could do this.
+如果我们只想在一些动作中使用 plug `assign_welcome_message` 呢？Phoenix 为此提供了一个解决方法，可以让我们指定应用于哪些动作。假如我们只想 `plug :assign_welcome_message` 到 `index` 和 `show` 动作，可以这么做。
 
 ```elixir
 defmodule HelloPhoenix.PageController do
@@ -243,9 +245,9 @@ defmodule HelloPhoenix.PageController do
 . . .
 ```
 
-### Sending responses directly
+### 直接发送响应
 
-If none of the rendering options above quite fits our needs, we can compose our own using some of the functions that Plug gives us. Let's say we want to send a response with a status of "201" and no body whatsoever. We can easily do that with the `send_resp/3` function.
+如果上面的渲染方式都不符合需求，我们可以使用 Plug 提供给我们的一些函数进行组合。假如我们想发送无响应内容 “201” 状态。使用 `send_resp/3` 函数就非常简单。
 
 ```elixir
 def index(conn, _params) do
@@ -254,9 +256,9 @@ def index(conn, _params) do
 end
 ```
 
-Reloading [http://localhost:4000](http://localhost:4000) should show us a completely blank page. The network tab of our browser's developer tools should show a response status of "201".
+重新载入后，[http://localhost:4000](http://localhost:4000) 应该显示一个完全空白的页面。我们浏览器开发者工具的网络标签应该显示响应状态为 "201"。
 
-If we would like to be really specific about the content type, we can use `put_resp_content_type/2` in conjunction with `send_resp/3`.
+如果我们想指定内容类型，可以使用 `put_resp_content_type` 和 `send_resp` 一起来完成。
 
 ```elixir
 def index(conn, _params) do
@@ -266,23 +268,23 @@ def index(conn, _params) do
 end
 ```
 
-Using Plug functions in this way, we can craft just the response we need.
+这样使用 Plug 函数，我们可以完成需要的响应。
 
-Rendering does not end with the template, though. By default, the results of the template render will be inserted into a layout, which will also be rendered.
+渲染并不是以模板作为结束。默认，模板的结果将会插入到一个同样被渲染的布局(layout)中。
 
-[Templates and layouts](http://www.phoenixframework.org/docs/templates) have their own guide, so we won't spend much time on them here. What we will look at is how to assign a different layout, or none at all, from inside a controller action.
+[模板和布局](http://www.phoenixframework.org/docs/templates) 有单独的章节，所以这里不会花太多的时间。我们要关注的是如何在控制器动作中分配不同的布局，或者不用布局。
 
-### Assigning Layouts
+### 分配布局
 
-Layouts are just a special subset of templates. They live in `/web/templates/layout`. Phoenix created one for us when we generated our app. It's called `app.html.eex`, and it is the layout into which all templates will be rendered by default.
+布局只是模板的特殊子集。它们在 `web/templates/layout` 文件夹内。当我们生成应用时，Phoenix 会为我们创建一个布局。叫 `app.html.eex`，默认，它是所有模板渲染的布局。
 
-Since layouts are really just templates, they need a view to render them. This is the `LayoutView` module defined in `/web/views/layout_view.ex`. Since Phoenix generated this view for us, we won't have to create a new one as long as we put the layouts we want to render inside the `/web/templates/layout` directory.
+因为布局实际只是模板，需要视图来渲染。也就是定义在 `web/views/layout_view.ex` 内的 `LayoutView` 模块。Phoenix 已经为我们生成这个视图，所以只要将我们想要渲染的布局放入 `/web/templates/layout` 文件夹就不需要创建新的视图。
 
-Before we create a new layout, though, let's do the simplest possible thing and render a template with no layout at all.
+创建一个新布局之前，让我们先做一个可能最简单的事情，不用布局来渲染一个模板。
 
-The `Phoenix.Controller` module provides the `put_layout/2` function for us to switch layouts. This takes `conn` as its first argument and a string for the basename of the layout we want to render. Another clause of the function will match on the boolean `false` for the second argument, and that's how we will render the Phoenix welcome page without a layout.
+`Phoenix.Controller` 模块提供的 `put_layout/2` 函数用于切换布局。它接受一个 `conn` 参数和想要渲染布局名称的字符串。此函数另一个子句的第二个参数将匹配布尔值 `false`，这就是我们不使用布局渲染欢迎页面的方法。
 
-In a freshly generated Phoenix app, edit the `index` action of the `PageController` module `web/controllers/page_controller.ex` to look like this.
+在新生成的 Phoenix 应用内，修改 `web/controllers/page_controller.ex` 文件的 `PageController` 模块的 `index` 动作如下：
 
 ```elixir
 def index(conn, params) do
@@ -291,11 +293,12 @@ def index(conn, params) do
   |> render "index.html"
 end
 ```
-After reloading [http://localhost:4000/](http://localhost:4000/), we should see a very different page, one with no title, logo image, or css styling at all.
 
-Very Important! For function calls in the middle of a pipeline, like `put_layout/2` here, it is critical to use parenthesis around the arguments because the pipe operator binds very tightly. This leads to parsing problems and very strange results.
+重新载入 [http://localhost:4000/](http://localhost:4000/)，我们应该看到一个非常不同的页面，没有标题，没有图片，也完全没有 css 样式。
 
-If you ever get a stack trace that looks like this,
+非常重要！在管道中的函数调用，像这里的 `put_layout`，参数使用括号包裹非常关键，因为管道操作符优先级非常高。它会导致解析问题和非常奇怪的结果。
+
+如果你曾看到类似这样的 stack trace,
 
 ```text
 **(FunctionClauseError) no function clause matching in Plug.Conn.get_resp_header/2
@@ -305,9 +308,9 @@ Stacktrace
     (plug) lib/plug/conn.ex:353: Plug.Conn.get_resp_header(false, "content-type")
 ```
 
-where your argument replaces `conn` as the first argument, one of the first things to check is whether there are parentheses in the right places.
+你的参数代替 `conn` 作为第一参数，首先要检查的就是括号是否在正确的位置。
 
-This is fine.
+这样就没问题。
 
 ```elixir
 def index(conn, params) do
@@ -317,7 +320,7 @@ def index(conn, params) do
 end
 ```
 
-Whereas this won't work.
+这样不行。
 
 ```elixir
 def index(conn, params) do
@@ -327,13 +330,14 @@ def index(conn, params) do
 end
 ```
 
-Now let's actually create another layout and render the index template into it. As an example, let's say we had a different layout for the admin section of our application which didn't have the logo image. To do this, let's copy the existing `app.html.eex` to a new file `admin.html.eex` in the same directory `web/templates/layout`. Then let's remove the line in `admin.html.eex` that displays the logo.
+现在让我们创建另一个布局然后将 index 模板渲染其中。作为一个例子，假设应用的管理员部分有不同的布局，并没有 logo 图片。
+为此，在 `web/templates/layout` 相同目录下，拷贝 `app.html.eex` 为一个新文件 `admin.html.eex`。然后移除 `admin.html.eex` 文件中显示 logo 的代码。
 
 ```html
 <span class="logo"></span> <!-- remove this line -->
 ```
 
-Then, pass the basename of the new layout into `put_layout/2` in our `index` action in `web/controllers/page_controller.ex`.
+然后传递新布局的文件名给 `web/controllers/page_controller.ex` 中 `index` 动作里的 `put_layout/2` 函数。
 
 ```elixir
 def index(conn, params) do
@@ -342,7 +346,8 @@ def index(conn, params) do
   |> render "index.html"
 end
 ```
-When we load the page, and we should be rendering the admin layout without a logo.
+
+页面载入后，我们应该渲染了一个没有 logo 的管理员布局。
 
 ### Overriding Rendering Formats
 
