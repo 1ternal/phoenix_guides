@@ -349,26 +349,27 @@ end
 
 页面载入后，我们应该渲染了一个没有 logo 的管理员布局。
 
-### Overriding Rendering Formats
+### 覆盖渲染格式
 
-Rendering HTML through a template is fine, but what if we need to change the rendering format on the fly? Let's say that sometimes we need HTML, sometimes we need plain text, and sometimes we need JSON. Then what?
+通过模板可以很好的渲染 HTML, 当我们需要更改渲染格式该怎么办呢? 比如说有些时候我们需要 HTML,有些时候需要文本,还有可能需要渲染JSON,怎么做?
 
-Phoenix allows us to change formats on the fly with the `_format` query string parameter. To make this happen, Phoenix requires an appropriately named view and an appropriately named template in the correct directory.
+渲染的时候,Phoenix 允许使用查询字符串参数 `_format` 修改格式.为此,Phoenix 要求在正确的目录下有准确的视图和模板.
 
-As an example, let's take the `PageController` index action from a newly generated app. Out of the box, this has the right view, `PageView`, the right templates directory, `/web/templates/page`, and the right template for rendering HTML, `index.html.eex`.
+以新生成的 `PageController` 的 index 动作为例.生成后,它有正确的视图 `PageView`,正确的模板目录 `/web/templates/pages` 和正确的渲染 HTML 的模板 `index.html.eex`.
 
 ```elixir
 def index(conn, _params) do
   render conn, "index.html"
 end
 ```
-What it doesn't have is an alternative template for rendering text. Let's add one at `/web/templates/page/index.text.eex`. Here is our example `index.text.eex` template.
+
+它没有提供的是可选的渲染文本的模板.我们添加 `/web/templates/page/index.text.eex` 文件.示例 `index.text.eex` 如下所示.
 
 ```elixir
 "OMG, this is actually some text."
 ```
 
-There are just few more things we need to do to make this work. We need to tell our router that it should accept the `text` format. We do that by adding `text` to the list of accepted formats in the `:browser` pipeline. Let's open up `web/router.ex` and change the `plug :accepts` to include `text` as well as `html` like this.
+为了渲染文本,还需要做一些其他事情.我们需要告诉路由器可以接受 `text` 格式.在 `:browser` 管道内添加 `text` 到接受格式的列表内.打开 `web/router.ex`,像下面这样修改 `plug :accepts` 包含 `text` 和 `html`.
 
 ```elixir
 defmodule HelloPhoenix.Router do
@@ -383,7 +384,7 @@ defmodule HelloPhoenix.Router do
 . . .
 ```
 
-We also need to tell the controller to render a template with the same format as the one returned by `Phoenix.Controller.get_format/1`. We do that by substituting the atom version of the template `:index` for the string version `"index.html"`.
+还需要告诉控制器使用与 `Phoenix.Controller.get_format/1` 返回值相同格式的模板.使用原子格式 `:index` 模板代替字符串格式 `"index.html"` 就可以了.
 
 ```elixir
 def index(conn, _params) do
@@ -391,9 +392,9 @@ def index(conn, _params) do
 end
 ```
 
-If we go to [http://localhost:4000/?_format=text](http://localhost:4000/?_format=text), we will see `OMG, this is actually some text.`
+如果我们浏览 [http://localhost:4000/?_format=text](http://localhost:4000/?_format=text) 页面,就会看到 `OMG, this is actually some text.`
 
-Of course, we can pass data into our template as well. Let's change our action to take in a message parameter by removing the `_` in front of `params` in the function definition. This time, we'll use the somewhat less-flexible string version of our text template, just to see that it works as well.
+当然,我们还可以传递数据给模板.修改动作,在函数定义处移除 `params` 前面的 `_` 来接受一个消息参数.这次,我们将使用兼容性稍差的字符串模板,确保它能正常工作.
 
 ```elixir
 def index(conn, params) do
@@ -401,19 +402,19 @@ def index(conn, params) do
 end
 ```
 
-And let's add a bit to our text template.
+给我们的文本模板增加点东西.
 
 ```elixir
 "OMG, this is actually some text." <%= @message %>
 ```
 
-Now if we go to `http://localhost:4000/?_format=text&message=CrazyTown`, we will see "OMG, this is actually some text. CrazyTown"
+现在浏览 `http://localhost:4000/?_format=text&message=CrazyTown` 页面,将会看到 "OMG, this is actually some text. CrazyTown"
 
-### Setting the Content Type
+### 设置内容类型(Content Type)
 
-Analogous to the `_format` query string param, we can render any sort of format we want by modifying the HTTP Accepts Header and providing the appropriate template.
+和 `_format` 查询字符参数类似,通过修改 HTTP 所接受的 Header 和 合适的模板,我们可以渲染任何想要的格式.
 
-If we wanted to render an xml version of our `index` action, we might implement the action like this in `web/page_controller.ex`.
+如果我们想渲染一个 xml 版本的 `index` 动作,在 `web/page_controller.ex` 可以这样实现.
 
 ```elixir
 def index(conn, _params) do
@@ -423,17 +424,17 @@ def index(conn, _params) do
 end
 ```
 
-We would then need to provide an `index.xml.eex` template which created valid xml, and we would be done.
+我们还需要提供一个 `index.xml.eex` 模板来创建合法的 xml 文件.
 
-For a list of valid content mime-types, please see the [mime.types](https://github.com/elixir-lang/plug/blob/master/lib/plug/mime.types) documentation from the Plug middleware framework.
+所有合法的 mime-types 列表,请查看 plug 中间件框架的[mime.types](https://github.com/elixir-lang/plug/blob/master/lib/plug/mime.types) 文档.
 
-### Setting the HTTP Status
+### 设置 HTTP 状态码(Status)
 
-We can also set the HTTP status code of a response similarly to the way we set the content type. The `Plug.Conn` module, imported into all controllers, has a `put_status/2` function to do this.
+与设置 Content-Type 类似,我们也可以设置响应的 HTTP 状态码.导入到所有控制器的 `Plug.Conn` 的 `put_status/2` 函数就是这个作用.
 
-`put_status/2` takes `conn` as the first parameter and as the second parameter either an integer or a "friendly name" used as an atom for the status code we want to set. Here is the list of supported [friendly names](https://github.com/elixir-lang/plug/blob/master/lib/plug/conn/status.ex#L7-L63).
+`put_status/2` 函数接受的第一个参数是 `conn`,第二个参数是可以是整型数值或我们想要设置的状态码的"友好"名字的原子.这是支持的 [友好名称](https://github.com/elixir-lang/plug/blob/master/lib/plug/conn/status.ex#L7-L63).
 
-Let's change the status in our `PageController` `index` action.
+在 `PageController` 的 `index` 内修改状态码.
 
 ```elixir
 def index(conn, _params) do
@@ -443,11 +444,12 @@ def index(conn, _params) do
 end
 ```
 
-The status code we provide must be valid - [Cowboy](https://github.com/ninenines/cowboy), the web server Phoenix runs on, will throw an error on invalid codes. If we look at our development logs (which is to say, the iex session), or use our browser's web inspection network tool, we will see the status code being set as we reload the page.
+我们提供的状态码必须是合法的 - 跑在其上的 [Cowboy](https://github.com/ninenines/cowboy) web 服务器,将会对非法的状态码抛出错误.刷新页面后,如果我们查看开发日志(也就是 iex 会话),或者使用浏览器的 web 检查网络工具,会看到状态码已被设定.
 
-If the action sends a response - either renders or redirects - changing the code will not change the behavior of the response. If, for example, we set the status to 404 or 500 and then `render "index.html"`, we do not get an error page. Similarly, no 300 level code will actually redirect. (It wouldn't know where to redirect to, even if the code did affect behavior.)
+如果动作发送一个响应 - 无论渲染或跳转 - 修改状态码不会更改响应的行为.假如我们设定状态码为 404 或 500,再 `render "index.html"`, 不会出现错误页面.类似的,没有 3xx 状态码也能进行跳转(就算状态码确实影响了行为,它也不知道跳转到哪里).
 
-The following implementation of the `HelloPhoenix.PageController` `index` action, for example, will _not_ render the default `not_found` behavior as expected.
+下面实现的 `HelloPhoenix.PageController` 的 `index` 动作, **不** 会渲染期望的默认 `not_found` 行为.
+
 
 ```elixir
 def index(conn, _params) do
@@ -457,7 +459,7 @@ def index(conn, _params) do
 end
 ```
 
-The correct way to render the 404 page from `HelloPhoenix.PageController` is:
+从 `HelloPhoenix.PageController` 渲染 404 页面正确的方式:
 
 ```elixir
 def index(conn, _params) do
@@ -467,13 +469,13 @@ def index(conn, _params) do
 end
 ```
 
-### Redirection
+### 跳转
 
-Often, we need to redirect to a new url in the middle of a request. A successful `create` action, for instance, will usually redirect to the `show` action for the model we just created. Alternately, it could redirect to the `index` action to show all the things of that same type. There are plenty of other cases where redirection is useful as well.
+我们经常需要在请求中间跳转到一个新的 url 地址.拿执行成功的 `create` 来说,通常需要跳转到刚创建的模型页面.也可以选择跳转到 `index` 动作来显示所有东西.跳转在很多其他的情况也非常有用.
 
-Whatever the circumstance, Phoenix controllers provide the handy `redirect/2` function to make redirection easy. Phoenix differentiates between redirecting to a path within the application and redirecting to a url - either within our application or external to it.
+任何情况下,Phoenix 控制器提供的 `redirect/2` 函数,都能很简单进行跳转.Phoenix 会区分应用内跳转和跳转到一个 url 地址 - 不是应用内部就是应用的外部.
 
-In order to try out `redirect/2`, let's create a new route in `web/router.ex`.
+为了尝试 `redirect/2`,在 `web/router.ex` 我们创建一个新的路由.
 
 ```elixir
 defmodule HelloPhoenix.Router do
@@ -493,7 +495,7 @@ defmodule HelloPhoenix.Router do
 end
 ```
 
-Then we'll change the `index` action to do nothing but redirect to our new route.
+然后我们将修改 `index` 动作成除跳转到新的路由上不做其他任何事.
 
 ```elixir
 def index(conn, _params) do
@@ -501,7 +503,7 @@ def index(conn, _params) do
 end
 ```
 
-Finally, let's define in the same file the action we redirect to, which simply renders the text `Redirect!`.
+最后,在相同的文件内定义我们跳转到的动作,让它简单的渲染文本 `Redirect!`.
 
 ```elixir
 def redirect_test(conn, _params) do
@@ -509,11 +511,12 @@ def redirect_test(conn, _params) do
 end
 ```
 
-When we reload our [Welcome Page](http://localhost:4000), we see that we've been redirected to `/redirect_test` which has rendered the text `Redirect!`. It works!
+当重新载入 [欢迎页面](http://localhost:4000),可以看到已经跳转到了 `/redirect_test` 并渲染了文本 `Redirect!`.
+成功了!
 
-If we care to, we can open up our developer tools, click on the network tab, and visit our root route again. We see two main requests for this page - a get to `/` with a status of `302`, and a get to `/redirect_test` with a status of `200`.
+如果我们关心,可以打开我们的开发工具,打开网络标签并再次访问路由根目录.可以看到这个页面有两个主请求 - 一个状态码为 `302` 的 `\` get 请求,另一个是 状态码是 `200` 的 `/redirect_test` get 请求.
 
-Notice that the redirect function takes `conn` as well as a string representing a relative path within our application. It can also take `conn` and a string representing a fully-qualified url.
+注意到跳转函数接受 `conn` 参数和一个应用内相对地址的的字符串.也接受 `conn` 和完全路径字符串.
 
 ```elixir
 def index(conn, _params) do
@@ -521,7 +524,7 @@ def index(conn, _params) do
 end
 ```
 
-We can also make use of the path helpers we learned about in the [Routing Guide](http://www.phoenixframework.org/docs/routing). It's useful to `alias` the helpers in `web/router.ex` in order to shorten the expression.
+我们还可以使用 [路由向导](http://www.phoenixframework.org/docs/routing) 中学到的路径助手(path heler).为了简化表达式,在 `web/router.ex` 文件 `alias` 它们会很有用.
 
 ```elixir
 defmodule HelloPhoenix.PageController do
@@ -533,7 +536,7 @@ defmodule HelloPhoenix.PageController do
 end
 ```
 
-Note that we can't use the url helper here because `redirect/2` using the atom `:to`, expects a path. For example, the following will fail.
+注意这里我们不能使用 url 助手,因为 `redirect/2` 使用的原子 `:to` 需要路径.例如,下面这样就会失败.
 
 ```elixir
 def index(conn, _params) do
@@ -541,7 +544,7 @@ def index(conn, _params) do
 end
 ```
 
-If we want to use the url helper to pass a full url to `redirect/2`, we must use the atom `:external`. Note that the url does not have to be truly external to our application to use `:external`, as we see in this example.
+如果我们想使用 url 助手传递给 `redirect/2` 一个完整地址,必须使用原子 `:external`.注意使用 `:external`的这个 url 地址,不必为真正的外部地址,可以像这样使用.
 
 ```elixir
 def index(conn, _params) do
